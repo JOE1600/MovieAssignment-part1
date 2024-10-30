@@ -350,16 +350,11 @@
 -r:"Library/Bee/artifacts/200b0aE.dag/UnityEngine.UI.ref.dll"
 -analyzer:"/Applications/Unity/Hub/Editor/2022.3.11f1/Unity.app/Contents/Tools/Unity.SourceGenerators/Unity.Properties.SourceGenerator.dll"
 -analyzer:"/Applications/Unity/Hub/Editor/2022.3.11f1/Unity.app/Contents/Tools/Unity.SourceGenerators/Unity.SourceGenerators.dll"
-"Assets/CylinderMaker.cs"
-"Assets/Dagger.cs"
-"Assets/Dog.cs"
-"Assets/Gear.cs"
-"Assets/GroundandCheckpost.cs"
+"Assets/AnimationHuman.cs"
 "Assets/Human.cs"
-"Assets/LampMaker.cs"
-"Assets/Maze.cs"
-"Assets/MeshUtilities.cs"
-"Assets/Walls.cs"
+"Assets/MeshUtilites.cs"
+"Assets/temple.cs"
+"Assets/vase.cs"
 -langversion:9.0
 
 /deterministic

@@ -6,57 +6,55 @@ public class HumanCreator : MonoBehaviour
 {
     private GameObject head;
     private GameObject body;
-    private GameObject[] arms;
-    private GameObject[] shoulderJoints;
-    private GameObject[] elbowJoints;
-    private GameObject[] legs;
-    private GameObject[] kneeJoints;
-    private GameObject[] ankleJoints;
+    public GameObject[] arms;
+    public GameObject[] shoulderJoints;
+    public GameObject[] elbowJoints;
+    public GameObject[] legs;
+    public GameObject[] kneeJoints;
+    public GameObject[] ankleJoints;
     private GameObject waist;
     private GameObject chest;
     private GameObject neck;
-    public GameObject daggerPrefab;
 
     // Start is called before the first frame update
-    void Start()
-    {
-        // Create Body
-        float bodyRadius = 1.5f;
-        float bodyHeight = 2.5f;
-        body = new GameObject("Body");
-        MeshFilter bodyMeshFilter = body.AddComponent<MeshFilter>();
-        MeshRenderer bodyMeshRenderer = body.AddComponent<MeshRenderer>();
-        bodyMeshRenderer.material = new Material(Shader.Find("Standard"));
-        bodyMeshFilter.mesh = MeshUtilities.Cylinder(16, bodyRadius, bodyHeight);
-        body.transform.parent = transform;
-        body.transform.localPosition = Vector3.zero;
+   void Start()
+{
+    // Create Body
+    float bodyRadius = 1.5f;
+    float bodyHeight = 2.5f;
+    body = new GameObject("Body");
+    MeshFilter bodyMeshFilter = body.AddComponent<MeshFilter>();
+    MeshRenderer bodyMeshRenderer = body.AddComponent<MeshRenderer>(); // This is the line you're referring to
+    bodyMeshRenderer.material = new Material(Shader.Find("Standard")); // This is correct
+    bodyMeshFilter.mesh = MeshUtilities.Cylinder(16, bodyRadius, bodyHeight);
+    body.transform.parent = transform;
+    body.transform.localPosition = Vector3.zero;
 
-        // Create Chest
-        float chestRad = 1.2f;
-        float chestLen = 1.8f;
-        chest = new GameObject("Chest");
-        chest.transform.parent = body.transform;
-        chest.transform.localPosition = new Vector3(0, bodyHeight / 2, 0);
-        MeshFilter chestMeshFilter = chest.AddComponent<MeshFilter>();
-        MeshRenderer chestMeshRenderer = chest.AddComponent<MeshRenderer>();
-        chestMeshRenderer.material = new Material(Shader.Find("Standard"));
-        chestMeshFilter.mesh = CreateWaistMesh(chestRad, chestLen);
+    // Create Chest
+    float chestRad = 1.2f;
+    float chestLen = 1.8f;
+    chest = new GameObject("Chest");
+    chest.transform.parent = body.transform;
+    chest.transform.localPosition = new Vector3(0, bodyHeight / 2, 0);
+    MeshFilter chestMeshFilter = chest.AddComponent<MeshFilter>();
+    MeshRenderer chestMeshRenderer = chest.AddComponent<MeshRenderer>();
+    chestMeshRenderer.material = new Material(Shader.Find("Standard"));
+    chestMeshFilter.mesh = CreateWaistMesh(chestRad, chestLen);
 
-        // Create Neck and Head
-        CreateHeadAndNeck(bodyHeight, chestLen);
+    // Create Neck and Head
+    CreateHeadAndNeck(bodyHeight, chestLen);
 
-        // Create Shoulder Joints and Arms
-        CreateArms(bodyHeight);
+    // Create Shoulder Joints and Arms
+    CreateArms(bodyHeight);
 
-        // Create Legs with Hip, Knee, and Ankle Joints
-        CreateLegs(bodyHeight);
+    // Create Legs with Hip, Knee, and Ankle Joints
+    CreateLegs(bodyHeight);
 
-        // Dagger setup (unchanged)
-        GameObject dagger = Instantiate(daggerPrefab);
-        dagger.transform.parent = this.transform;
-        dagger.transform.localPosition = new Vector3(1.5f, 0.5f, 0.5f);
-        dagger.transform.localRotation = Quaternion.Euler(0, 90f, 0);
-    }
+    // Position and scale the entire human model
+    transform.position = new Vector3(-1.44f, 0.851f, 7.79f);
+    transform.localScale = new Vector3(0.2f, 0.2f, 0.2f); // Adjust this scale factor to decrease the size further if needed
+}
+
 
     // Method to create the Neck and Head
     private void CreateHeadAndNeck(float bodyHeight, float chestLen)
@@ -123,7 +121,7 @@ public class HumanCreator : MonoBehaviour
         }
     }
 
-    // Method to create Legs with Hip, Knee, and Ankle Joints
+ // Method to create Legs with Hip, Knee, and Ankle Joints
     private void CreateLegs(float bodyHeight)
     {
         legs = new GameObject[2];
@@ -176,7 +174,8 @@ public class HumanCreator : MonoBehaviour
         }
     }
 
-    // Method to create Waist Mesh
+
+ // Method to create Waist Mesh
     private Mesh CreateWaistMesh(float radius, float height)
     {
         return MeshUtilities.Cylinder(16, radius, height);  // Using a cylinder for the waist
@@ -187,4 +186,8 @@ public class HumanCreator : MonoBehaviour
     {
         return MeshUtilities.Cylinder(16, radius, height);  // Using a cylinder for the upper arm
     }
+
+
+
+
 }
