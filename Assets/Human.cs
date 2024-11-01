@@ -46,7 +46,7 @@ public class HumanCreator : MonoBehaviour
         CreateLegJoints(bodyHeight);
 
         // Position the entire human model
-        transform.position = new Vector3(-1.44f, 2.2f, 7.79f);
+        transform.position = new Vector3(-8.12f, 2.2f, 7.79f);
 
 
 

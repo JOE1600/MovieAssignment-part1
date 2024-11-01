@@ -353,6 +353,7 @@
 "Assets/Animation.cs"
 "Assets/Box.cs"
 "Assets/Human.cs"
+"Assets/Key.cs"
 "Assets/MeshUtilites.cs"
 "Assets/temple.cs"
 "Assets/vase.cs"

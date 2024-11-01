@@ -12,11 +12,11 @@ public class DetailedHouse : MonoBehaviour
     public Material tvMaterial;
     public Material bookMaterial;
     public Material paintingMaterial;
-    public Material keyMaterial;  
+    
    
 
     // Texture variables for assigning textures via the editor
-    public Texture keyTexture;     
+        
     public Texture wallTexture;
     public Texture floorTexture;
     public Texture windowTexture;
@@ -43,7 +43,7 @@ public class DetailedHouse : MonoBehaviour
         CreateFurniture(house);
         CreateAnotherRoom(house);
 	CreateChestOfDrawers(house);
-	CreateKey();
+	
     }
 
     void Update()
@@ -418,174 +418,6 @@ void CreateHouse(GameObject house)
     }
 
 
-
-
-
-
-
-
-
-
-void CreateKey()
-{
-    // Create a new GameObject for the key
-    GameObject key = new GameObject("Key");
-    
-    // Create the mesh filter and renderer
-    MeshFilter meshFilter = key.AddComponent<MeshFilter>();
-    MeshRenderer meshRenderer = key.AddComponent<MeshRenderer>();
-
-    // Assign the material and texture
-    if (keyMaterial != null)
-    {
-        if (keyTexture != null)
-        {
-            keyMaterial.mainTexture = keyTexture;
-        }
-        meshRenderer.material = keyMaterial;
-    }
-    else
-    {
-        Debug.LogWarning("No material assigned to the key. Please assign a material in the Unity Editor.");
-    }
-
-    // Create the key mesh
-    meshFilter.mesh = CreateKeyMesh();
-}
-
-Mesh CreateKeyMesh()
-{
-    Mesh mesh = new Mesh();
-
-    // Create components for the key using basic shapes
-    Mesh headMesh = CreateKeyHead();
-    Mesh shaftMesh = CreateKeyShaft();
-    Mesh teethMesh = CreateKeyTeeth();
-
-    // Combine the meshes
-    CombineInstance[] combine = new CombineInstance[3];
-    combine[0].mesh = headMesh;
-    combine[0].transform = Matrix4x4.TRS(Vector3.up * 0.1f, Quaternion.identity, Vector3.one); // Adjusted position for head
-
-    combine[1].mesh = shaftMesh;
-    combine[1].transform = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one); // Positioning the shaft
-
-    combine[2].mesh = teethMesh;
-    combine[2].transform = Matrix4x4.TRS(Vector3.down * 0.05f, Quaternion.identity, Vector3.one); // Positioned closer to the shaft's tip
-
-    mesh.CombineMeshes(combine);
-    mesh.RecalculateNormals();
-
-    return mesh;
-}
-
-Mesh CreateKeyHead()
-{
-    float radius = 0.05f;
-    GameObject head = new GameObject("KeyHead");
-
-    // Generate the sphere
-    MeshUtilities.Sphere(head, radius);
-    Mesh headMesh = head.GetComponent<MeshFilter>().mesh;
-    Vector3[] vertices = headMesh.vertices;
-    Vector2[] uvs = new Vector2[vertices.Length];
-
-    // Spherical mapping based on vertex positions
-    for (int i = 0; i < vertices.Length; i++)
-    {
-        Vector3 v = vertices[i].normalized;
-        uvs[i] = new Vector2(
-            0.5f + Mathf.Atan2(v.z, v.x) / (2f * Mathf.PI), 
-            0.5f - Mathf.Asin(v.y) / Mathf.PI
-        );
-    }
-
-    headMesh.uv = uvs;
-    GameObject.Destroy(head);
-    return headMesh;
-}
-
-Mesh CreateKeyShaft()
-{
-    int segments = 12;
-    float radius = 0.02f;
-    float height = 0.1f;
-    Mesh shaftMesh = MeshUtilities.Cylinder(segments, radius, height);
-    Vector3[] vertices = shaftMesh.vertices;
-    Vector2[] uvs = new Vector2[vertices.Length];
-
-    // Cylindrical UV mapping along the shaft
-    for (int i = 0; i < vertices.Length; i++)
-    {
-        float u = Mathf.Atan2(vertices[i].z, vertices[i].x) / (2 * Mathf.PI) + 0.5f;
-        float v = vertices[i].y / height + 0.5f;
-        uvs[i] = new Vector2(u, v);
-    }
-
-    shaftMesh.uv = uvs;
-    return shaftMesh;
-}
-
-
-Mesh CreateKeyTeeth()
-{
-    float toothWidth = 0.03f;
-    float toothHeight = 0.05f;
-    float toothDepth = 0.02f;
-
-    Mesh teeth = new Mesh();
-
-    Vector3[] vertices = new Vector3[]
-    {
-        // Front face
-        new Vector3(-toothWidth, 0, -toothDepth),
-        new Vector3(toothWidth, 0, -toothDepth),
-        new Vector3(toothWidth, toothHeight, -toothDepth),
-        new Vector3(-toothWidth, toothHeight, -toothDepth),
-        // Back face
-        new Vector3(-toothWidth, 0, toothDepth),
-        new Vector3(toothWidth, 0, toothDepth),
-        new Vector3(toothWidth, toothHeight, toothDepth),
-        new Vector3(-toothWidth, toothHeight, toothDepth)
-    };
-
-    int[] tris = new int[]
-    {
-        // Front face
-        0, 2, 1,
-        0, 3, 2,
-        // Back face
-        4, 5, 6,
-        4, 6, 7,
-        // Left face
-        0, 3, 7,
-        0, 7, 4,
-        // Right face
-        1, 2, 6,
-        1, 6, 5,
-        // Top face
-        2, 3, 7,
-        2, 7, 6,
-        // Bottom face
-        0, 4, 5,
-        0, 5, 1
-    };
-
-    teeth.vertices = vertices;
-    teeth.triangles = tris;
-
-    // Ensure the UV array matches the vertices array
-    Vector2[] uvs = new Vector2[vertices.Length];
-
-    // Map each face individually
-    uvs[0] = new Vector2(0, 0); uvs[1] = new Vector2(1, 0); uvs[2] = new Vector2(1, 1); uvs[3] = new Vector2(0, 1); // Front face
-    uvs[4] = new Vector2(0, 0); uvs[5] = new Vector2(1, 0); uvs[6] = new Vector2(1, 1); uvs[7] = new Vector2(0, 1); // Back face
-
-    teeth.uv = uvs;
-    teeth.RecalculateNormals();
-
-    return teeth;
-}
 
 
 }
