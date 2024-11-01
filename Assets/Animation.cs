@@ -9,16 +9,21 @@ public class HumanAnimator : MonoBehaviour
     public AnimationCurve shoulderXCurve;
     public AnimationCurve shoulderYCurve;
     public AnimationCurve shoulderZCurve;
-
     public AnimationCurve elbowXCurve;
     public AnimationCurve elbowYCurve;
     public AnimationCurve elbowZCurve;
+
+    public AnimationCurve hipXCurveLeft, hipXCurveRight;
+    public AnimationCurve kneeXCurveLeft, kneeXCurveRight;
+    public AnimationCurve torsoYRotationCurve;
+
+    // New curve for x-axis transition
+    public AnimationCurve xPositionCurve;
 
     private Animation anim;
 
     void Awake()
     {
-        // Initialize animation curves...
         InitializeCurves();
     }
 
@@ -27,7 +32,7 @@ public class HumanAnimator : MonoBehaviour
         anim = humanModel.gameObject.AddComponent<Animation>();
         AnimationClip clip = new AnimationClip { legacy = true };
 
-        // Set the curves for ShoulderJoint 1 and ElbowJoint 1
+        // Set curves for shoulder joints
         clip.SetCurve("Body/ShoulderJoint 1", typeof(Transform), "localEulerAngles.x", shoulderXCurve);
         clip.SetCurve("Body/ShoulderJoint 1", typeof(Transform), "localEulerAngles.y", shoulderYCurve);
         clip.SetCurve("Body/ShoulderJoint 1", typeof(Transform), "localEulerAngles.z", shoulderZCurve);
@@ -35,7 +40,6 @@ public class HumanAnimator : MonoBehaviour
         clip.SetCurve("Body/ShoulderJoint 1/ElbowJoint 1", typeof(Transform), "localEulerAngles.y", elbowYCurve);
         clip.SetCurve("Body/ShoulderJoint 1/ElbowJoint 1", typeof(Transform), "localEulerAngles.z", elbowZCurve);
 
-        // Set the curves for ShoulderJoint 2 and ElbowJoint 2
         clip.SetCurve("Body/ShoulderJoint 2", typeof(Transform), "localEulerAngles.x", shoulderXCurve);
         clip.SetCurve("Body/ShoulderJoint 2", typeof(Transform), "localEulerAngles.y", shoulderYCurve);
         clip.SetCurve("Body/ShoulderJoint 2", typeof(Transform), "localEulerAngles.z", shoulderZCurve);
@@ -43,56 +47,50 @@ public class HumanAnimator : MonoBehaviour
         clip.SetCurve("Body/ShoulderJoint 2/ElbowJoint 2", typeof(Transform), "localEulerAngles.y", elbowYCurve);
         clip.SetCurve("Body/ShoulderJoint 2/ElbowJoint 2", typeof(Transform), "localEulerAngles.z", elbowZCurve);
 
+        // Legs setup for walking motion with separate curves
+        clip.SetCurve("Body/HipJoint 1", typeof(Transform), "localEulerAngles.x", hipXCurveLeft);
+        clip.SetCurve("Body/HipJoint 1/KneeJoint 1", typeof(Transform), "localEulerAngles.x", kneeXCurveLeft);
+        clip.SetCurve("Body/HipJoint 2", typeof(Transform), "localEulerAngles.x", hipXCurveRight);
+        clip.SetCurve("Body/HipJoint 2/KneeJoint 2", typeof(Transform), "localEulerAngles.x", kneeXCurveRight);
+
+        // Torso slight rotation for a more realistic walk
+        clip.SetCurve("Body/Torso", typeof(Transform), "localEulerAngles.y", torsoYRotationCurve);
+
+        // Set x-position curve for movement transition
+        clip.SetCurve("", typeof(Transform), "localPosition.x", xPositionCurve);
+
         clip.wrapMode = WrapMode.Loop;
-
-        anim.AddClip(clip, "arm_wave");
-        anim.Play("arm_wave");
-    }
-
-    void Update()
-    {
-        // Debug log for animation playing state
-        Debug.Log("Is playing: " + anim.IsPlaying("arm_wave"));
+        anim.AddClip(clip, "walking_cycle");
+        anim.Play("walking_cycle");
     }
 
     private void InitializeCurves()
     {
-        // Shoulder X curve
-        shoulderXCurve = new AnimationCurve();
-        shoulderXCurve.AddKey(0f, 0f);
-        shoulderXCurve.AddKey(0.25f, 30f);
-        shoulderXCurve.AddKey(0.5f, 60f);
-        shoulderXCurve.AddKey(0.75f, 30f);
-        shoulderXCurve.AddKey(1f, 0f);
+        shoulderXCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.25f, 30f), new Keyframe(0.5f, 60f), new Keyframe(0.75f, 30f), new Keyframe(1f, 0f));
+        shoulderYCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.25f, 10f), new Keyframe(0.5f, 20f), new Keyframe(0.75f, 10f), new Keyframe(1f, 0f));
+        shoulderZCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 0f));
 
-        shoulderYCurve = new AnimationCurve();
-        shoulderYCurve.AddKey(0f, 0f);
-        shoulderYCurve.AddKey(0.25f, 10f);
-        shoulderYCurve.AddKey(0.5f, 20f);
-        shoulderYCurve.AddKey(0.75f, 10f);
-        shoulderYCurve.AddKey(1f, 0f);
+        elbowXCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.25f, 30f), new Keyframe(0.5f, 60f), new Keyframe(0.75f, 30f), new Keyframe(1f, 0f));
+        elbowYCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.25f, 10f), new Keyframe(0.5f, 20f), new Keyframe(0.75f, 10f), new Keyframe(1f, 0f));
+        elbowZCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f, 0f));
 
-        shoulderZCurve = new AnimationCurve();
-        shoulderZCurve.AddKey(0f, 0f);
-        shoulderZCurve.AddKey(1f, 0f);
+        hipXCurveLeft = new AnimationCurve(new Keyframe(0f, 20f), new Keyframe(0.5f, -20f), new Keyframe(1f, 20f));
+        kneeXCurveLeft = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.5f, 40f), new Keyframe(1f, 0f));
 
-        // Elbow X curve
-        elbowXCurve = new AnimationCurve();
-        elbowXCurve.AddKey(0f, 0f);
-        elbowXCurve.AddKey(0.25f, 30f);
-        elbowXCurve.AddKey(0.5f, 60f);
-        elbowXCurve.AddKey(0.75f, 30f);
-        elbowXCurve.AddKey(1f, 0f);
+        hipXCurveRight = new AnimationCurve(new Keyframe(0f, -20f), new Keyframe(0.5f, 20f), new Keyframe(1f, -20f));
+        kneeXCurveRight = new AnimationCurve(new Keyframe(0f, 40f), new Keyframe(0.5f, 0f), new Keyframe(1f, 40f));
 
-        elbowYCurve = new AnimationCurve();
-        elbowYCurve.AddKey(0f, 0f);
-        elbowYCurve.AddKey(0.25f, 10f);
-        elbowYCurve.AddKey(0.5f, 20f);
-        elbowYCurve.AddKey(0.75f, 10f);
-        elbowYCurve.AddKey(1f, 0f);
+        torsoYRotationCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.5f, -5f), new Keyframe(1f, 5f));
 
-        elbowZCurve = new AnimationCurve();
-        elbowZCurve.AddKey(0f, 0f);
-        elbowZCurve.AddKey(1f, 0f);
+        // Define x-axis position transition curve
+        xPositionCurve = new AnimationCurve(
+            new Keyframe(0f, -1.14f),  // Start at x = -1.14
+            new Keyframe(1f, -0.09f)   // End at x = -0.09
+        );
+    }
+
+    void Update()
+    {
+        Debug.Log("Is playing walking_cycle: " + anim.IsPlaying("walking_cycle"));
     }
 }
