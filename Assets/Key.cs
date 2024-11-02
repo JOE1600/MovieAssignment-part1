@@ -1,81 +1,130 @@
 using UnityEngine;
+using System.Collections;
 
 public class TreasureKeyScene : MonoBehaviour
 {
     public Material keyMaterial;
     public Texture keyTexture;
-    public GameObject fireParticlePrefab; // Reference to the fire particle prefab
+    public AudioClip keySound;
+    public GameObject humanModel;
+    public AudioClip destructionSound; // Sound for when the key is destroyed
+    private GameObject key;
+    private GameObject fireKey;
+    private AudioSource keyAudioSource;
+    private AudioSource fireKeyAudioSource;
 
     void Start()
     {
         // Enable fog in the scene
         RenderSettings.fog = true;
-        RenderSettings.fogColor = Color.gray; // Set fog color
-        RenderSettings.fogDensity = 0.05f; // Adjust fog density
+        RenderSettings.fogColor = Color.gray;
+        RenderSettings.fogDensity = 0.05f;
 
-        // Create the key
-        CreateKey();
+        // Create the key and add sound setup
+        key = CreateKey();
+        keyAudioSource = AddSoundEffect(key);
 
-        // Create the second key with fire effect
-        CreateFireKey(new Vector3(2.6f, 2.38f, -3.67f));
+        // Create the fire key and add sound setup
+        fireKey = CreateFireKey(new Vector3(2.6f, 2.38f, -3.67f));
+        fireKeyAudioSource = AddSoundEffect(fireKey);
+
+        // Start the coroutine to destroy the key at 35 seconds
+        StartCoroutine(DestroyKeyAtTime(35f));
+
     }
 
-    void CreateFireKey(Vector3 position)
+    void Update()
+{
+    // Check distance between humanModel and key
+    if (humanModel != null)
     {
-        // Create a new GameObject for the fire key
-        GameObject fireKey = new GameObject("FireKey");
-
-        // Set the position of the fire key
-        fireKey.transform.position = position;
-
-        // Create the mesh filter and renderer
-        MeshFilter meshFilter = fireKey.AddComponent<MeshFilter>();
-        MeshRenderer meshRenderer = fireKey.AddComponent<MeshRenderer>();
-
-        // Assign the material and texture for the fire key
-        if (keyMaterial != null)
+        // Check if key and fireKey still exist
+        if (key != null)
         {
-            if (keyTexture != null)
+            float distanceToKey = Vector3.Distance(humanModel.transform.position, key.transform.position);
+
+            // Play or stop sound for the key if within range
+            if (distanceToKey <= 4f)
             {
-                keyMaterial.mainTexture = keyTexture; // Use the same texture or a different one if desired
+                if (!keyAudioSource.isPlaying)
+                {
+                    keyAudioSource.Play();
+                }
             }
-            meshRenderer.material = keyMaterial; // Assign the same material or a different one
+            else
+            {
+                if (keyAudioSource.isPlaying)
+                {
+                    keyAudioSource.Stop();
+                }
+            }
         }
-        else
+
+        if (fireKey != null)
         {
-            Debug.LogWarning("No material assigned to the fire key. Please assign a material in the Unity Editor.");
+            float distanceToFireKey = Vector3.Distance(humanModel.transform.position, fireKey.transform.position);
+
+            // Play or stop sound for the fire key if within range
+            if (distanceToFireKey <= 4f)
+            {
+                if (!fireKeyAudioSource.isPlaying)
+                {
+                    fireKeyAudioSource.Play();
+                }
+            }
+            else
+            {
+                if (fireKeyAudioSource.isPlaying)
+                {
+                    fireKeyAudioSource.Stop();
+                }
+            }
         }
-
-        // Create the key mesh
-        meshFilter.mesh = CreateKeyMesh(); // You can create a different mesh if desired
-
-        // Add fire effect
-        AddFireEffect(fireKey);
-
-        // Instantiate the fire particle prefab
-        if (fireParticlePrefab != null)
-        {
-            GameObject fireParticles = Instantiate(fireParticlePrefab, fireKey.transform);
-            fireParticles.transform.localPosition = Vector3.zero; // Position the particles at the key's location
-            fireParticles.transform.localScale = Vector3.one; // Set the scale if needed
-        }
-
-        // Add lights
-        AddLighting(fireKey);
     }
-    void CreateKey()
-    {
-        // Create a new GameObject for the key
-        GameObject key = new GameObject("Key");
+}
 
-        // Set the position of the key
+    private IEnumerator DestroyKeyAtTime(float time)
+{
+    // Wait for the specified time
+    yield return new WaitForSeconds(time);
+
+    // Play the destruction sound effect before destroying the key
+    PlayDestructionSound();
+
+    // Destroy the key if it exists
+    if (key != null)
+    {
+        Destroy(key);
+        Debug.Log("Key destroyed at " + time + " seconds.");
+    }
+}
+
+private void PlayDestructionSound()
+{
+    // Create a temporary GameObject to play the sound
+    GameObject soundObject = new GameObject("DestructionSound");
+    AudioSource audioSource = soundObject.AddComponent<AudioSource>();
+    
+    // Set the clip and properties
+    audioSource.clip = keySound; // Use the appropriate destruction sound clip
+    audioSource.playOnAwake = false;
+    audioSource.volume = 1.0f; // Adjust volume as needed
+    
+    // Play the sound
+    audioSource.Play();
+    
+    // Destroy the sound object after the clip finishes playing
+    Destroy(soundObject, audioSource.clip.length);
+}
+
+    GameObject CreateKey()
+    {
+        GameObject key = new GameObject("Key");
         key.transform.position = new Vector3(-3.95f, 2.38f, 3.29f);
 
-        // Create the mesh filter and renderer
         MeshFilter meshFilter = key.AddComponent<MeshFilter>();
         MeshRenderer meshRenderer = key.AddComponent<MeshRenderer>();
 
-        // Assign the material and texture
         if (keyMaterial != null)
         {
             if (keyTexture != null)
@@ -89,100 +138,91 @@ public class TreasureKeyScene : MonoBehaviour
             Debug.LogWarning("No material assigned to the key. Please assign a material in the Unity Editor.");
         }
 
-        // Create the key mesh
         meshFilter.mesh = CreateKeyMesh();
-
-        // Add lights
         AddLighting(key);
+
+        return key;
     }
 
-    
+    AudioSource AddSoundEffect(GameObject key)
+    {
+        // Add an AudioSource component to the key and set properties
+        AudioSource audioSource = key.AddComponent<AudioSource>();
+        audioSource.clip = keySound;
+        audioSource.playOnAwake = false; // Play only when within range
+        audioSource.loop = true;
+        audioSource.spatialBlend = 0f;
+        audioSource.volume = 1.0f;
 
-    void AddFireEffect(GameObject fireKey)
-{
-    // Create a Particle System for the fire effect
-    ParticleSystem fireParticles = fireKey.AddComponent<ParticleSystem>();
-    ParticleSystem.MainModule mainModule = fireParticles.main;
-    mainModule.startLifetime = 1.5f;
-    mainModule.startSpeed = 1.5f; // Increased speed for upward movement
-    mainModule.startSize = 0.5f;
-    mainModule.startColor = new ParticleSystem.MinMaxGradient(Color.yellow, Color.red);
+        return audioSource;
+    }
 
-    // Set the gravity modifier to zero for floating effect
-    mainModule.gravityModifier = 0f; // No gravity for upward movement
+    GameObject CreateFireKey(Vector3 position)
+    {
+        GameObject fireKey = new GameObject("FireKey");
+        fireKey.transform.position = position;
 
-    // Configure emission
-    ParticleSystem.EmissionModule emissionModule = fireParticles.emission;
-    emissionModule.rateOverTime = 50; // Particles per second
+        MeshFilter meshFilter = fireKey.AddComponent<MeshFilter>();
+        MeshRenderer meshRenderer = fireKey.AddComponent<MeshRenderer>();
 
-    // Configure shape
-    ParticleSystem.ShapeModule shapeModule = fireParticles.shape;
-    shapeModule.shapeType = ParticleSystemShapeType.Cone;
-    shapeModule.angle = 25f;
-    shapeModule.radius = 0.1f;
+        if (keyMaterial != null)
+        {
+            if (keyTexture != null)
+            {
+                keyMaterial.mainTexture = keyTexture;
+            }
+            meshRenderer.material = keyMaterial;
+        }
+        else
+        {
+            Debug.LogWarning("No material assigned to the fire key. Please assign a material in the Unity Editor.");
+        }
 
-    // Adjust start color to fade to transparency
-    ParticleSystem.ColorOverLifetimeModule colorModule = fireParticles.colorOverLifetime;
-    colorModule.enabled = true;
-    Gradient gradient = new Gradient();
-    gradient.SetKeys(
-        new GradientColorKey[] { new GradientColorKey(Color.yellow, 0f), new GradientColorKey(Color.red, 0.5f), new GradientColorKey(new Color(1, 0, 0, 0), 1f) },
-        new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 0.5f), new GradientAlphaKey(0f, 1f) }
-    );
-    colorModule.color = gradient;
+        meshFilter.mesh = CreateKeyMesh();
+        AddLighting(fireKey);
 
-    fireParticles.Play(); // Start the particle system
-}
-
+        return fireKey;
+    }
 
     void AddLighting(GameObject key)
     {
-        // Create a Point Light
         GameObject pointLightObj = new GameObject("KeyPointLight");
         Light pointLight = pointLightObj.AddComponent<Light>();
         pointLight.type = LightType.Point;
         pointLight.intensity = 5f;
         pointLight.range = 5f;
-        pointLight.color = Color.yellow; // Same color as the key
-        pointLight.transform.position = key.transform.position; // Position it at the key's location
-        pointLight.transform.parent = key.transform; // Parent to key for easy management
+        pointLight.color = Color.yellow;
+        pointLight.transform.position = key.transform.position;
+        pointLight.transform.parent = key.transform;
 
-        // Create a Spotlight
         GameObject spotLightObj = new GameObject("KeySpotLight");
         Light spotLight = spotLightObj.AddComponent<Light>();
         spotLight.type = LightType.Spot;
         spotLight.spotAngle = 45f;
         spotLight.intensity = 3f;
         spotLight.range = 5f;
-        spotLight.color = Color.yellow; // Match the color of the key
-        spotLight.transform.position = key.transform.position + Vector3.up; // Position above the key
-        spotLight.transform.rotation = Quaternion.Euler(90, 0, 0); // Pointing downwards
-        spotLight.transform.parent = key.transform; // Parent to key
-
-        // Add a flickering effect to the point light
-        pointLightObj.AddComponent<FlickerLight>();
+        spotLight.color = Color.yellow;
+        spotLight.transform.position = key.transform.position + Vector3.up;
+        spotLight.transform.rotation = Quaternion.Euler(90, 0, 0);
+        spotLight.transform.parent = key.transform;
     }
-
 
     Mesh CreateKeyMesh()
     {
         Mesh mesh = new Mesh();
-
-        // Create components for the key using basic shapes
         Mesh headMesh = CreateKeyHead();
         Mesh shaftMesh = CreateKeyShaft();
         Mesh teethMesh = CreateKeyTeeth();
 
-        // Combine the meshes
         CombineInstance[] combine = new CombineInstance[3];
         combine[0].mesh = headMesh;
-        combine[0].transform = Matrix4x4.TRS(Vector3.up * 0.1f, Quaternion.identity, Vector3.one); // Adjusted position for head
+        combine[0].transform = Matrix4x4.TRS(Vector3.up * 0.1f, Quaternion.identity, Vector3.one);
 
         combine[1].mesh = shaftMesh;
-        combine[1].transform = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one); // Positioning the shaft
+        combine[1].transform = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
 
         combine[2].mesh = teethMesh;
-        combine[2].transform = Matrix4x4.TRS(Vector3.down * 0.05f, Quaternion.identity, Vector3.one); // Positioned closer to the shaft's tip
+        combine[2].transform = Matrix4x4.TRS(Vector3.down * 0.05f, Quaternion.identity, Vector3.one);
 
         mesh.CombineMeshes(combine);
         mesh.RecalculateNormals();
@@ -296,6 +336,12 @@ public class TreasureKeyScene : MonoBehaviour
 
         return teeth;
     }
+
+
+
+
+
+
 }
 
 public class FlickerLight : MonoBehaviour

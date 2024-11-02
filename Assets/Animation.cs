@@ -5,6 +5,7 @@ using UnityEngine;
 public class HumanAnimator : MonoBehaviour
 {
     public Transform humanModel;
+    private bool isTransitioning = false; // Flag to check if a transition is in progress
 
     public AnimationCurve shoulderXCurve;
     public AnimationCurve shoulderYCurve;
@@ -24,7 +25,7 @@ public class HumanAnimator : MonoBehaviour
     public AnimationCurve zPositionCurve;
 
     private Animation anim;
-
+    private float elapsedTime = 0f; // Variable to keep track of the elapsed time
     void Awake()
     {
         InitializeCurves();
@@ -102,9 +103,10 @@ public class HumanAnimator : MonoBehaviour
 
     StartCoroutine(CheckIfAtFinalPosition());
 
-
-    
-
+    StartCoroutine(TrackPositionOverTime());
+ 
+    // Start the transition at 19 seconds
+    StartCoroutine(StartTransitionAt(23f, -2.2f, 4f));
   
 
 
@@ -441,13 +443,168 @@ private bool IsAtFinalPosition(Vector3 targetPosition)
     return distance < 0.1f; // You may adjust this threshold as needed
 }
 
+private IEnumerator TrackPositionOverTime()
+{
+    while (true)
+    {
+        yield return new WaitForSeconds(1f); // Log position every second
+        elapsedTime += 1f; // Increment elapsed time
+        Vector3 currentPosition = humanModel.localPosition; // Get the current position
+
+        // Log or store the current time and position
+        Debug.Log($"At t = {elapsedTime}s, Position = {currentPosition}");
+    }
+}
 
 
 
 
+private IEnumerator StartTransitionAt(float startTime, float targetX, float duration)
+{
+    // Wait until the specified start time is reached
+    while (elapsedTime < startTime)
+    {
+        yield return null; // Wait for the next frame
+    }
 
+    // First, rotate the human model by 90 degrees on the y-axis at time = 19 seconds
+    float rotationDuration = 1f; // Duration for the rotation
+    float rotationElapsed = 0f;
 
+    Vector3 initialRotation = humanModel.localEulerAngles;
+    Vector3 targetRotation = initialRotation + new Vector3(0f, 90f, 0f); // Rotate 90 degrees around the Y-axis
 
+    // Execute the rotation
+    while (rotationElapsed < rotationDuration)
+    {
+        float t = rotationElapsed / rotationDuration; // Calculate the normalized time (0 to 1)
+        humanModel.localEulerAngles = Vector3.Lerp(initialRotation, targetRotation, t); // Interpolate the rotation
+
+        rotationElapsed += Time.deltaTime; // Increment elapsed time
+        yield return null; // Wait for the next frame
+    }
+
+    // Ensure the final rotation is set to the target
+    humanModel.localEulerAngles = targetRotation;
+
+    // Wait until 23 seconds for the x-axis transition to start
+    float transitionWaitTime = 4f; // Duration to wait before starting x-axis transition
+    yield return new WaitForSeconds(transitionWaitTime);
+
+    // Now, start the x-axis transition
+    float elapsed = 0f;
+
+    // Get the initial position
+    Vector3 initialPosition = humanModel.localPosition;
+    float initialX = initialPosition.x;
+
+    // Smoothly transition to the target x position over the specified duration
+    while (elapsed < duration)
+    {
+        float t = elapsed / duration; // Calculate the normalized time (0 to 1)
+        float newX = Mathf.Lerp(initialX, targetX, t); // Interpolate the x position
+
+        // Update the human model's position
+        humanModel.localPosition = new Vector3(newX, initialPosition.y, initialPosition.z);
+
+        elapsed += Time.deltaTime; // Increment elapsed time
+        yield return null; // Wait for the next frame
+    }
+
+    // Ensure the final position is set to the target
+    humanModel.localPosition = new Vector3(targetX, initialPosition.y, initialPosition.z);
+
+    // Now wait until 33 seconds for the shoulder joint rotation
+    while (elapsedTime < 33f)
+    {
+        yield return null; // Wait for the next frame
+    }
+
+    // Define the keyframes for the shoulder joint swing
+    Transform shoulderJoint = humanModel.Find("Body/ShoulderJoint 1"); // Adjust the path as needed
+    if (shoulderJoint != null)
+    {
+        // Define keyframe rotations
+        Vector3[] keyframes = new Vector3[]
+        {
+            new Vector3(81.64f, -16.7f, 0f),     // Initial position at 33 seconds
+            new Vector3(100f, -10f, 0f),         // First swing position
+            new Vector3(81.64f, -16.7f, 0f),     // Return to initial position
+            new Vector3(63f, -22f, 0f),          // Second swing position
+            new Vector3(81.64f, -16.7f, 0f)      // Return to initial position
+        };
+
+        // Define the timing for each keyframe
+        float[] keyframeTimes = new float[] { 0f, 0.5f, 1f, 1.5f, 2f }; // In seconds from the start of swinging
+
+        float totalKeyframesDuration = keyframeTimes[keyframeTimes.Length - 1];
+        float swingElapsed = 0f;
+
+        // Perform the swinging motion
+        while (swingElapsed < totalKeyframesDuration)
+        {
+            // Determine the current keyframe based on elapsed time
+            for (int i = 0; i < keyframeTimes.Length - 1; i++)
+            {
+                if (swingElapsed >= keyframeTimes[i] && swingElapsed < keyframeTimes[i + 1])
+                {
+                    float t = (swingElapsed - keyframeTimes[i]) / (keyframeTimes[i + 1] - keyframeTimes[i]);
+                    shoulderJoint.localEulerAngles = Vector3.Lerp(keyframes[i], keyframes[i + 1], t);
+                    break;
+                }
+            }
+
+            swingElapsed += Time.deltaTime; // Increment elapsed time
+            yield return null; // Wait for the next frame
+        }
+
+        // Ensure the final rotation is set to the last keyframe position
+        shoulderJoint.localEulerAngles = keyframes[keyframes.Length - 1];
+    }
+
+    // At 38 seconds, reset the shoulder joint to its normal position
+    while (elapsedTime < 38f)
+    {
+        yield return null; // Wait for the next frame
+    }
+    
+    if (shoulderJoint != null)
+    {
+        shoulderJoint.localEulerAngles = new Vector3(81.64f, -16.7f, 0f); // Reset to original position
+    }
+
+    // Wait until 40 seconds to start the jump animation
+    while (elapsedTime < 40f)
+    {
+        yield return null; // Wait for the next frame
+    }
+
+    // Start the jump animation
+    float jumpDuration = 2f; // Total duration for the jump
+    float jumpHeight = 3f; // Maximum height of the jump
+    Vector3 initialJumpPosition = humanModel.localPosition;
+    Vector3 jumpEndPosition = new Vector3(initialJumpPosition.x, -0.56f, initialJumpPosition.z);
+    float time = 0f;
+
+    while (time < jumpDuration)
+    {
+        float t = time / jumpDuration; // Normalized time (0 to 1)
+
+        // Calculate the y position based on the physics equation
+        float yPosition = initialJumpPosition.y + (jumpHeight * t - 0.5f * 9.81f * t * t); // s = ut + 1/2gt^2
+
+        // Interpolate the position
+        humanModel.localPosition = new Vector3(initialJumpPosition.x, yPosition, initialJumpPosition.z);
+
+        time += Time.deltaTime; // Increment time
+        yield return null; // Wait for the next frame
+    }
+
+    // Set the final jump down position
+    humanModel.localPosition = jumpEndPosition;
+
+    // Optional: Reset the position back to ground or any other logic after landing
+}
 
 
 }
